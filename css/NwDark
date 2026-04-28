@@ -1,0 +1,1390 @@
+/*
+* 主题名称：Nightwing_Dark
+* 视觉风格：暗黑哥特基底、夜翼蓝霓虹光效、深色毛玻璃透传、微光排版、纯CSS幽蓝慢雨
+* 框架编写/整理：墨千尾 | 二创重构：Vessel | 深色夜翼版适配：Gemini
+* 核心逻辑：天地分离交互；Char/User双轨分离；思维链截断；原生模糊释放；文字辉光渲染；轻柔随机慢雨。
+*/
+/*🦇🏙️🚓🚨🟦🔵💠*/
+
+/* === 先导篇：字体导入 === */
+@import url("https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;700&display=swap");
+@font-face {
+    font-family: 'ZhuqueFangsong';
+    src: url("http://sharkpan.xyz/f/24j6iQ/%E4%B8%AD%E6%96%87%20-%20Huiwen.otf") format('opentype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+/* === 一、全局变量 (深色版重构) === */
+:root {
+  --font-main: 'ZhuqueFangsong', serif;
+  --font-cursive: 'Dancing Script', cursive;
+
+  /* 深色毛玻璃背景变量 */
+  --SmartThemeBlurTintColor: rgba(10, 14, 20, 0.7);
+  --SmartThemeChatTintColor: rgba(15, 20, 30, 0.75);
+
+/* 主体文字色：从灰蓝调整为冷霜白，在深色背景上提供更利落的轮廓 */
+  --ink-main: #DCE4F0;       
+  --ink-sub: #4A75B5;        
+  --ink-accent: #629FFF; 
+
+  /* 削弱全局发光：去除导致模糊的散光参数，仅保留极微弱的投影以分离背景 */
+  --glow-light: 0 1px 1px rgba(0, 0, 0, 0.8);
+  --glow-strong: 0 1px 2px rgba(0, 0, 0, 0.9), 0 0 5px rgba(98, 159, 255, 0.3);
+
+  /* 边框与悬停背景 */
+  --book-bg-hover: rgba(58, 124, 224, 0.1);
+  --book-border: rgba(58, 124, 224, 0.3);
+
+  --mes-user-bg: rgba(98, 159, 255, 0.05);
+  --mes-ai-bg: rgba(10, 15, 25, 0.4);
+
+  --cover-title-char: "我会接住你";
+  --cover-subtitle-char: "I'll catch you.";
+  --author-prefix-char: "-";
+  --footer-text-char: "「 每一次跃起，都是通往飞翔的序章 」";
+
+  --avatar-img-user: url('https://images4.alphacoders.com/288/thumb-1920-288238.jpeg');
+  --cover-title-user: "飞翔的格雷森";
+  --cover-subtitle-user: "Flying Graysons";
+  --author-prefix-user: "-";
+  --footer-text-user: "「 即使是飞鸟，也终有倦航归巢之时 」";
+
+  --ui-floor-prefix: "跃起 ";
+  --ui-floor-suffix: "";
+  --ui-time-prefix: "滞空 ";
+  --ui-time-suffix: "";
+  --ui-token-prefix: "心跳 ";
+  --ui-token-suffix: "";
+
+  --input-placeholder: "I've got you.";
+  --load-more-text: "· 没入布鲁德海文的夜 ·";
+}
+
+/* --- Char 角色横幅 3 图循环 --- */
+.mes[is_user="false"]:nth-of-type(3n+1) .avatar img { 
+    content: url('https://raw.githubusercontent.com/nw37/ST_Assets/main/pic/1_1.png') !important; 
+}
+.mes[is_user="false"]:nth-of-type(3n+2) .avatar img { 
+    content: url(https://raw.githubusercontent.com/nw37/ST_Assets/main/pic/3_3.png) !important; 
+}
+.mes[is_user="false"]:nth-of-type(3n+3) .avatar img { 
+    content: url('https://raw.githubusercontent.com/nw37/ST_Assets/main/pic/2_2.png') !important; 
+}
+
+/* --- User 用户横幅 3 图循环 --- */
+.mes[is_user="true"]:nth-of-type(3n+1) .avatar img { 
+    content: url('https://images4.alphacoders.com/288/thumb-1920-288238.jpeg') !important; 
+}
+.mes[is_user="true"]:nth-of-type(3n+2) .avatar img { 
+    content: url('https://github.com/nw37/ST_Assets/blob/main/pic/2.png?raw=true') !important; 
+}
+.mes[is_user="true"]:nth-of-type(3n+3) .avatar img { 
+    content: url('https://raw.githubusercontent.com/nw37/ST_Assets/main/pic/3.png') !important; 
+}
+
+/* --- 思维链文案循环变量 --- */
+.mes[is_user="false"]:nth-of-type(3n+1) {
+  --reasoning-text: "You'll never know if you can fly\A unless you take the risk of falling.";
+  --breath-min: 0.25;
+}
+.mes[is_user="false"]:nth-of-type(3n+2) {
+  --reasoning-text: "We fall because someone pushes us,\A and we get back up so we can push back.";
+  --breath-min: 0.2;
+}
+.mes[is_user="false"]:nth-of-type(3n+3) {
+  --reasoning-text: "Everyone's favorite superpower is always flight.\A I gotta admit though,\A I've learned to love falling too.";
+  --breath-min: 0.35;
+}
+
+/* ============================================ */
+/* 全局基底：释放毛玻璃、文字微光 */
+/* ============================================ */
+body {
+  font-family: var(--font-main);
+  font-weight: normal;
+  color: var(--ink-main);
+  letter-spacing: 0.02em;
+  text-shadow: none !important; /* 彻底移除全局正文阴影，保证文字边缘绝对锐利 */
+}
+
+.drawer-content,
+#table_drawer_content,
+.options-content,
+#chat {
+  background-image: none !important;
+  border-color: var(--book-border) !important;
+  box-shadow: none !important;
+}
+
+/* ==================================================== */
+/* 🌧️ 修复版：霓虹幽蓝夜雨动画 */
+/* ==================================================== */
+
+/* ==================================================== */
+/* 强制接管系统背景 (修复被 ST 原生背景遮挡的问题) */
+/* ==================================================== */
+
+/* 1. 强制清空父级图层的干扰 */
+#bg_layer {
+    background-image: none !important;
+    background-color: #000 !important; /* 拉伸时如果出现黑边，使用纯黑垫底 */
+}
+
+/* 2. 直接对 ST 的核心背景双图层进行覆盖 */
+#bg1, #bg2 {
+    /* 替换为 GitHub Raw 专用直链，降低加载失败率 */
+    background-image: url('https://raw.githubusercontent.com/nw37/ST_Assets/main/pic/bg.jpg') !important;
+    
+    /* 强制铺满屏幕，不留黑边 */
+    background-size: cover !important; 
+    background-repeat: no-repeat !important; 
+    
+    /* 根据原画，夜翼位于画面偏右侧，我们将锚点定在右侧，确保人物不被裁掉 */
+    background-position: 80% 50% !important;
+    
+    /* 继承你之前的光影克制逻辑，压暗背景，凸显文字和霓虹雨丝 */
+    filter: brightness(0.85) !important;
+}
+
+/* 第一层：远景细小雨丝 */
+html::after {
+  content: '';
+  position: fixed;
+  top: -100vh;
+  left: 0;
+  /* 恢复宽度，黑底上太细会隐形 */
+  width: 1.5px; 
+  height: 25px;
+  /* 提高亮度和基础不透明度，使用更亮的冰蓝色 */
+  background: rgba(138, 180, 248, 0.35); 
+  z-index: 9998 !important;
+  pointer-events: none !important;
+  filter: blur(0.8px);
+  /* 大幅提升阴影（其他雨滴）的可见度 */
+  box-shadow:
+    8vw 15vh 0 rgba(138, 180, 248, 0.25),
+    22vw 75vh 0 rgba(138, 180, 248, 0.3),
+    38vw 8vh 0 rgba(138, 180, 248, 0.15),
+    52vw 85vh 0 rgba(138, 180, 248, 0.25),
+    68vw 25vh 0 rgba(138, 180, 248, 0.2),
+    84vw 140vh 0 rgba(138, 180, 248, 0.15),
+    12vw 110vh 0 rgba(138, 180, 248, 0.3),
+    33vw 170vh 0 rgba(138, 180, 248, 0.15),
+    57vw 55vh 0 rgba(138, 180, 248, 0.1),
+    76vw 95vh 0 rgba(138, 180, 248, 0.25),
+    94vw 35vh 0 rgba(138, 180, 248, 0.35);
+  animation: rain-distant 3s linear infinite;
+}
+
+@keyframes rain-distant {
+  0%   { transform: translateY(0); opacity: 0; }
+  15%  { opacity: 0.85; } /* 动画显影更清晰 */
+  85%  { opacity: 0.85; }
+  100% { transform: translateY(220vh); opacity: 0; }
+}
+
+/* 第二层：近景清晰雨丝 */
+body::after {
+  content: '';
+  position: fixed;
+  top: -100vh;
+  left: 0;
+  /* 增加宽度，模拟近景大雨滴 */
+  width: 2px; 
+  height: 35px;
+  /* 核心雨滴更亮，带有荧光感 */
+  background: rgba(158, 194, 255, 0.6); 
+  z-index: 9999 !important;
+  pointer-events: none !important;
+  filter: blur(0.4px);
+  box-shadow:
+    10vw 20vh 0 rgba(158, 194, 255, 0.35),
+    25vw 80vh 0 rgba(158, 194, 255, 0.45),
+    40vw 10vh 0 rgba(158, 194, 255, 0.25),
+    55vw 90vh 0 rgba(158, 194, 255, 0.4),
+    70vw 30vh 0 rgba(158, 194, 255, 0.35),
+    85vw 150vh 0 rgba(158, 194, 255, 0.25),
+    15vw 120vh 0 rgba(158, 194, 255, 0.4),
+    35vw 180vh 0 rgba(158, 194, 255, 0.25),
+    60vw 60vh 0 rgba(158, 194, 255, 0.15),
+    80vw 100vh 0 rgba(158, 194, 255, 0.35),
+    95vw 40vh 0 rgba(158, 194, 255, 0.5);
+  animation: rain-near 2.2s linear infinite;
+}
+
+@keyframes rain-near {
+  0%   { transform: translateY(0); opacity: 0; }
+  10%  { opacity: 1; }
+  85%  { opacity: 1; }
+  100% { transform: translateY(220vh); opacity: 0; }
+}
+
+/* ===== 二、顶栏 ===== */
+#top-settings-holder {
+  border: none !important;
+  border-bottom: 1px solid var(--book-border) !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  padding-top: 10px !important;
+  padding-bottom: 10px !important;
+  background: rgba(10, 14, 20, 0.5) !important; /* 顶栏增加极微弱深色遮罩 */
+}
+#top-bar {
+  border-radius: 0 !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+  display: flex !important;
+  justify-content: center !important;
+  gap: 15px !important;
+}
+
+#top-settings-holder .drawer-icon {
+  opacity: 1;
+  outline: none !important;
+  -webkit-tap-highlight-color: transparent;
+  padding: 0 !important;
+  margin: 0 !important;
+  width: 40px !important;
+  height: 40px !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+}
+
+#top-settings-holder .drawer-icon::before {
+  content: '' !important;
+  display: inline-block !important;
+  width: 32px !important;
+  height: 32px !important;
+  background-size: contain !important;
+  background-repeat: no-repeat !important;
+  background-position: center !important;
+  filter: drop-shadow(var(--glow-light)) !important;
+  transition: filter 0.5s ease, transform 0.5s ease !important;
+}
+
+@media (hover: hover) {
+  #top-settings-holder .drawer-icon:hover::before {
+    filter: drop-shadow(var(--glow-strong)) brightness(1.3) !important;
+    transform: scale(1.1) !important;
+  }
+}
+#top-settings-holder .drawer-icon.openIcon::before,
+#top-settings-holder .drawer-icon:active::before {
+  filter: drop-shadow(var(--glow-strong)) brightness(1.5) !important;
+  transform: scale(0.9) !important;
+}
+
+/* 图标资源定位 */
+.drawer-icon.fa-sliders::before { background-image: url('https://github.com/nw37/ST_Assets/blob/main/icons/icon1.png?raw=true') !important; }
+.drawer-icon.fa-plug::before { background-image: url('https://github.com/nw37/ST_Assets/blob/main/icons/icon2.png?raw=true') !important; }
+.drawer-icon.fa-font::before { background-image: url('https://github.com/nw37/ST_Assets/blob/main/icons/icon3.png?raw=true') !important; }
+.drawer-icon.fa-book-atlas::before { background-image: url('https://github.com/nw37/ST_Assets/blob/main/icons/icon4.png?raw=true') !important; }
+.drawer-icon.fa-user::before, .drawer-icon.fa-user-cog::before, .drawer-icon.fa-user-gear::before, .drawer-icon.fa-circle-user::before { 
+  background-image: url('https://github.com/nw37/ST_Assets/blob/main/icons/icon5.png?raw=true') !important; 
+}
+.drawer-icon.fa-image::before, .drawer-icon.fa-images::before, .drawer-icon.fa-panorama::before { 
+  background-image: url('https://github.com/nw37/ST_Assets/blob/main/icons/icon6.png?raw=true') !important; 
+}
+.drawer-icon.fa-cubes::before { background-image: url('https://github.com/nw37/ST_Assets/blob/main/icons/icon7.png?raw=true') !important; }
+.drawer-icon.fa-face-smile::before { background-image: url('https://github.com/nw37/ST_Assets/blob/main/icons/icon8.png?raw=true') !important; }
+.drawer-icon.fa-address-card::before { background-image: url('https://github.com/nw37/ST_Assets/blob/main/icons/icon9.png?raw=true') !important; }
+
+/* ===== 三、底栏终端重构 (战术闭环) ===== */
+#send_form {
+  /* 使用极深的暗夜蓝黑，与上方背景拉开微妙层次 */
+  background-color: rgba(8, 12, 16, 0.95) !important; 
+  backdrop-filter: blur(10px) !important;
+  border: none !important;
+  /* 顶部增加一道极细的夜翼蓝战术轮廓线 */
+  border-top: 1px solid rgba(98, 159, 255, 0.15) !important;
+  border-radius: 0 !important;
+  padding: 4px 10px;
+  /* 增加向上的微弱暗影，让输入框像一个悬浮的操作台 */
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.6) !important; 
+  min-height: auto !important;
+  z-index: 100 !important;
+}
+
+#send_textarea {
+  background-color: transparent !important;
+  border: none !important;
+  /* 常态下输入框底线为暗虚线 */
+  border-bottom: 1px dashed rgba(115, 140, 170, 0.3) !important; 
+  border-radius: 0 !important;
+  font-family: var(--font-main);
+  color: var(--ink-main) !important;
+  text-shadow: none !important; /* 保证输入文本绝对锐利 */
+  padding: 10px 5px 10px 15px;
+  box-shadow: none !important;
+  min-height: 40px !important;
+  clip-path: none !important;
+  transition: border-color 0.4s ease, background-color 0.4s ease;
+}
+
+/* 交互反馈：激活输入框时的战术高亮 */
+#send_textarea:focus {
+  /* 聚焦时底线变为夜翼蓝实线，并带有极其微弱的背景提亮 */
+  border-bottom: 1px solid rgba(98, 159, 255, 0.6) !important;
+  background-color: rgba(98, 159, 255, 0.02) !important;
+  outline: none !important;
+}
+
+/* 底栏图标 */
+#send_form [class*="fa-"]::before {
+  color: var(--ink-sub) !important;
+  font-size: 14px !important;
+  text-shadow: var(--glow-light);
+  transition: color 0.8s ease, text-shadow 0.8s ease;
+}
+@media (hover: hover) {
+  #send_form [class*="fa-"]:hover::before {
+    color: var(--ink-accent) !important;
+    text-shadow: var(--glow-strong);
+  }
+}
+
+/* ==================================================== */
+/* 发送按钮重构：夜翼 Logo 战术版 */
+/* ==================================================== */
+
+/* 1. 彻底隐藏原生图标与子元素 */
+#send_button *, #send_but *, #send-button *,
+#send_button::before, #send_button::after,
+#send_but::before, #send_but::after {
+  display: none !important;
+  content: none !important;
+  opacity: 0 !important;
+}
+
+/* 2. Logo 渲染与常态设定 */
+#send_button, #send_but, #send-button {
+  background-color: transparent !important;
+  background-image: url('https://github.com/nw37/ST_Assets/blob/main/icons/icon12.png?raw=true') !important;
+  
+  /* 【核心修正 1：解除压缩】使用 contain 确保长宽比不畸形，居中显示 */
+  background-size: contain !important; 
+  background-repeat: no-repeat !important;
+  background-position: center !important;
+  
+  border: none !important;
+  width: 45px !important;
+  height: 45px !important;
+  
+  /* 【核心修正 2：锁定可见度】强制覆盖ST“输入框为空时发暗”的系统设定 */
+  opacity: 0.85 !important; 
+  
+  /* 赋予专属的战术蓝微光，不再使用全局弱阴影 */
+  filter: drop-shadow(0 0 4px rgba(98, 159, 255, 0.6)) !important;
+  transition: all 0.3s ease-in-out !important;
+  cursor: pointer !important;
+  position: relative !important;
+}
+
+/* 3. 交互反馈：悬停时的高亮与动态 */
+#send_button:hover, #send_but:hover, #send-button:hover {
+  opacity: 1 !important; /* 悬停时透明度拉满，呈现最纯正的Logo蓝 */
+  
+  /* 增强发光，略微提亮，并保留你设计的倾斜动作 */
+  filter: drop-shadow(0 0 12px rgba(98, 159, 255, 0.9)) brightness(1.15) !important;
+  transform: scale(1.1) rotate(-5deg) !important;
+}
+
+/* 4. 点击反馈：缩放 */
+#send_button:active, #send_but:active, #send-button:active {
+  transform: scale(0.9) !important;
+}
+
+/* ===== 四、聊天区域核心重构 ===== */
+#chat { padding: 20px 10px !important; }
+
+/* 融化原生容器 */
+.mes .mesAvatarWrapper,
+.mes .mes_block { display: contents !important; }
+
+.mes {
+  position: relative !important;
+  width: 100% !important;
+  max-width: none !important;
+  padding-top: 130px !important;
+  padding-bottom: 55px !important;
+  margin: 0 0 25px 0 !important;
+  border: none !important;
+  box-shadow: none !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 0px;
+}
+
+/* 头像化身横幅 */
+.mes .avatar {
+  display: flex !important;
+  order: 0 !important;
+  width: 80% !important;
+  height: 45px !important;
+  margin: 10px 0 45px 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  border-radius: 0 !important;
+  overflow: hidden !important;
+  justify-content: center !important;
+  align-items: center !important;
+  background-color: transparent !important;
+  box-shadow: 0 0 20px rgba(98, 159, 255, 0.15) !important; /* 幽蓝倒影 */
+  z-index: 3;
+}
+/* 横幅图片：去除泥泞感，保持物理实体的高对比度暗化 */
+.mes .avatar img {
+  display: block !important;
+  width: 100% !important;
+  height: 90px !important;
+  object-fit: cover !important;
+  object-position: center 20% !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  
+  /* 仅使用滤镜控制光影，亮度压至60%，同时提升15%的对比度防止发灰 */
+  filter: brightness(0.6) contrast(1.15) !important; 
+  opacity: 1 !important; /* 【核心修正】：绝对禁用透明度，保持图像扎实 */
+  transition: filter 0.8s ease;
+}
+
+/* 悬停时微微提亮 */
+.mes .avatar:hover img {
+  filter: brightness(0.85) contrast(1.1) !important;
+}
+
+/* 消息按钮组（天际线） */
+.mes_buttons {
+  position: absolute !important;
+  top: -2px !important;
+  bottom: 0px !important;
+  left: 0 !important;
+  right: 0 !important;
+  margin: 0 auto !important;
+  pointer-events: none !important;
+  display: flex !important;
+  flex-direction: row !important;
+  justify-content: center !important;
+  align-items: flex-start !important;
+  width: 100% !important;
+  gap: 8px !important;
+  opacity: 0.15;
+  transition: opacity 0.8s ease;
+  z-index: 50;
+}
+.mes:hover .mes_buttons { opacity: 1; }
+.mes_buttons .mes_button,
+.mes_buttons .favorite-toggle-icon,
+.mes_buttons .mes_edit_buttons { pointer-events: auto !important; }
+.mes_buttons .mes_button,
+.mes_buttons .favorite-toggle-icon,
+.mes_buttons .mes_edit_buttons .menu_button {
+  writing-mode: horizontal-tb !important;
+  background-color: transparent !important;
+  padding: 2px 4px !important;
+  line-height: 1.2 !important;
+  font-size: 0.9em !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: transform 0.8s ease, opacity 0.8s ease;
+}
+
+/* 编辑/更多按钮文案替换 */
+.mes_edit > i, .extraMesButtonsHint > i { display: none !important; }
+.mes_edit::before, .extraMesButtonsHint::before {
+  display: block !important;
+  font-size: 0.9rem;
+  color: var(--ink-sub);
+  font-weight: bold;
+  text-shadow: var(--glow-light) !important;
+  font-family: var(--font-main);
+  transition: color 0.8s ease, text-shadow 0.8s ease;
+}
+.extraMesButtonsHint::before { content: '更多' !important; }
+.mes_edit::before { content: '修订' !important; }
+/* 按钮自身的悬停发光反馈 */
+@media (hover: hover) { 
+  .mes:hover .mes_edit:hover::before, .mes:hover .extraMesButtonsHint:hover::before { color: var(--ink-accent) !important; text-shadow: var(--glow-strong) !important; } 
+  .mes_buttons .mes_button:hover, .mes_buttons .favorite-toggle-icon:hover, .mes_buttons .mes_edit_buttons .menu_button:hover { 
+    background-color: rgba(20, 30, 45, 0.95) !important; 
+    border-color: var(--ink-accent) !important; 
+    box-shadow: 0 0 10px rgba(98, 159, 255, 0.3) !important; 
+  }
+}
+
+/* 翻页系统（地平线下） */
+.mes .swipe_left,
+.mes .swipe_right,
+.mes .swipeRightBlock {
+  position: absolute !important;
+  bottom: 28px !important;
+  z-index: 10;
+  opacity: 0.15;
+  transition: opacity 0.8s ease;
+  pointer-events: auto !important;
+}
+.mes:hover .swipe_left,
+.mes:hover .swipe_right,
+.mes:hover .swipeRightBlock { opacity: 1; }
+
+.mes .swipe_left { left: 2% !important; transform: none !important; }
+.mes .swipe_left i { font-size: 0 !important; }
+.mes .swipe_left i::before {
+  content: '上篇◎' !important;
+  font-family: var(--font-main) !important;
+  font-size: 13px !important;
+  font-style: normal !important;
+  letter-spacing: 0.05em;
+  color: var(--ink-sub);
+  text-shadow: var(--glow-light);
+  white-space: nowrap;
+  transition: color 0.8s ease, text-shadow 0.8s ease;
+}
+.mes .swipe_right, .mes .swipeRightBlock { right: 2% !important; transform: none !important; }
+.mes .swipe_right i, .mes .swipeRightBlock i { font-size: 0 !important; }
+.mes .swipe_right i::before,
+.mes .swipeRightBlock i::before {
+  content: '◎下篇' !important;
+  font-family: var(--font-main) !important;
+  font-size: 13px !important;
+  font-style: normal !important;
+  letter-spacing: 0.05em;
+  color: var(--ink-sub);
+  text-shadow: var(--glow-light);
+  white-space: nowrap;
+  transition: color 0.8s ease, text-shadow 0.8s ease;
+}
+
+/* 后续 AI 专属翻页微调 */
+.mes[is_user="false"] .swipe_left::before,
+.mes[is_user="false"] .swipe_left::after,
+.mes[is_user="false"] .swipe_right::before,
+.mes[is_user="false"] .swipe_right::after { content: none !important; }
+.mes[is_user="false"] .swipe_left i,
+.mes[is_user="false"] .swipe_right i { font-size: 0 !important; color: transparent !important; }
+.mes[is_user="false"] .swipe_left::before {
+  content: '上篇◎' !important;
+  font-family: var(--font-main) !important;
+  font-size: 13px !important;
+  color: var(--ink-sub) !important;
+  letter-spacing: 0.05em;
+  transition: color 0.8s ease;
+  white-space: nowrap;
+  display: inline-block !important;
+  position: relative !important;
+  top: -25px !important;
+}
+.mes[is_user="false"] .swipe_right::before {
+  content: '◎下篇' !important;
+  font-family: var(--font-main) !important;
+  font-size: 13px !important;
+  color: var(--ink-sub) !important;
+  letter-spacing: 0.05em;
+  transition: color 0.8s ease;
+  white-space: nowrap;
+  display: inline-block !important;
+  position: relative !important;
+  top: 4px !important;
+}
+.mes[is_user="false"] .swipe_left:hover::before,
+.mes[is_user="false"] .swipe_right:hover::before { color: var(--ink-accent) !important; text-shadow: var(--glow-strong); }
+
+/* 翻页计数器 */
+.mes .swipe_info, .mes .swipes_counter {
+  position: absolute !important;
+  bottom: 5px !important;
+  left: 0 !important;
+  right: 0 !important;
+  margin: 0 auto !important;
+  text-align: center !important;
+  width: fit-content;
+  font-family: var(--font-main) !important;
+  font-size: 11px !important;
+  color: var(--ink-sub) !important;
+  text-shadow: var(--glow-light);
+  padding: 0 5px !important;
+  z-index: 10;
+  opacity: 0.15;
+  transition: opacity 0.8s ease;
+  pointer-events: auto !important;
+}
+.mes:hover .swipe_info, .mes:hover .swipes_counter { opacity: 1; }
+@media (hover: hover) {
+  .mes .swipe_left:hover i::before,
+  .mes .swipe_right:hover i::before,
+  .mes .swipeRightBlock:hover i::before {
+    color: var(--ink-accent) !important;
+    text-shadow: var(--glow-strong) !important;
+  }
+}
+
+/* ==================================================== */
+/* 封面文案双轨：动态景深交互 (克制版焦点切换) */
+/* ==================================================== */
+
+/* 1. 后景水印 (英文字体) - 常态退居幕后 */
+.mes::after {
+  position: absolute !important;
+  top: 15px !important; 
+  left: 0 !important;
+  right: 0 !important;
+  margin: 0 auto !important;
+  text-align: center;
+  font-family: var(--font-cursive);
+  font-size: 4.5em;
+  color: var(--ink-sub);
+  text-shadow: var(--glow-light);
+  opacity: 0.25; 
+  filter: blur(1px); 
+  z-index: 1;
+  white-space: nowrap;
+  pointer-events: none;
+  transition: color 0.8s ease, opacity 0.8s ease, text-shadow 0.8s ease, filter 0.8s ease, transform 0.8s ease;
+}
+
+/* 2. 后景水印悬停 - 三层物理霓虹渲染 */
+.mes:hover:not(:has(.mes_text:hover)):not(:has(.mes_reasoning:hover)):not(:has(.mes_button:hover)):not(:has(.favorite-toggle-icon:hover)):not(:has(.menu_button:hover))::after { 
+  color: #DCE8FF !important; 
+  text-shadow: 0 0 2px #629FFF, 0 0 8px rgba(98, 159, 255, 0.85), 0 0 18px rgba(20, 80, 180, 0.5) !important; 
+  opacity: 0.9 !important; filter: blur(0px) !important; transform: scale(1.02); 
+}
+
+.mes[is_user="false"]::after { content: var(--cover-subtitle-char); }
+.mes[is_user="true"]::after { content: var(--cover-subtitle-user); }
+
+/* ==================================================== */
+
+/* 3. 前景标题 (中文字体) - 常态绝对清晰 */
+.mes::before {
+  position: absolute !important;
+  top: 65px !important;
+  left: 0 !important;
+  right: 0 !important;
+  margin: 0 auto !important;
+  text-align: center;
+  font-family: var(--font-main);
+  font-size: 1.6em;
+  letter-spacing: 0.4em;
+  color: var(--ink-accent);
+  text-shadow: var(--glow-strong);
+  opacity: 1; 
+  filter: blur(0px);
+  z-index: 2;
+  white-space: nowrap;
+  pointer-events: none;
+  transition: opacity 0.8s ease, filter 0.8s ease, transform 0.8s ease;
+}
+
+/* 4. 前景标题悬停 - 失去焦点，但绝不消失 */
+/* 【热区修复】：与后景保持同样的排他性触发逻辑 */
+.mes:hover:not(:has(.mes_text:hover)):not(:has(.mes_reasoning:hover)):not(:has(.mes_button:hover)):not(:has(.favorite-toggle-icon:hover)):not(:has(.menu_button:hover))::before { 
+  opacity: 0.45; filter: blur(1px); transform: scale(0.98); 
+}
+
+.mes[is_user="false"]::before { content: var(--cover-title-char); }
+.mes[is_user="true"]::before { content: var(--cover-title-user); }
+
+/* 角色名区域重构：去除廉价符号，优化战术冷光质感 */
+.mes .ch_name {
+  order: 1 !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  margin: 10px auto 15px auto !important;
+  padding: 0 !important;
+  font-family: var(--font-main);
+  font-size: 0.95em !important;
+  font-weight: bold !important; /* 稍微加粗，撑起标题分量 */
+  color: #B0C4DE !important; /* 冷钢蓝，替代刺眼的纯白 */
+  text-shadow: 0 0 8px rgba(176, 196, 222, 0.4); /* 微弱的冷色自发光 */
+  letter-spacing: 0.2em; /* 拉开字间距，提升高级感 */
+  z-index: 3;
+}
+
+/* 彻底封杀原有的破折号 */
+.mes .ch_name::before, .mes .ch_name::after {
+  content: none !important;
+  display: none !important;
+}
+
+.mes[is_user="false"] .ch_name::before { content: var(--author-prefix-char); }
+.mes[is_user="true"] .ch_name::before { content: var(--author-prefix-user); }
+
+/* 数据行装饰 (黑底更配高级灰蓝) */
+.mes .mesIDDisplay i, .mes .mes_timer i, .mes .tokenCounterDisplay i { display: none !important; }
+.mes .timestamp { display: none !important; }
+/* 1. 基础数据行布局与数值颜色 (冷钢灰，不透明) */
+.mes .mesIDDisplay, .mes .mes_timer, .mes .tokenCounterDisplay {
+  display: block !important;
+  width: 100%;
+  text-align: center;
+  font-family: var(--font-main);
+  font-size: 0.75em !important;
+  color: #8BA8CC !important;          
+  text-shadow: none !important; 
+  margin: 3px 0 !important;
+  letter-spacing: 0.1em;
+  opacity: 1 !important; 
+  z-index: 3;
+}
+
+/* 2. 元素排序与底部分隔线 (保留原有结构) */
+.mes .mesIDDisplay { order: 2 !important; }
+.mes .mes_timer { order: 3 !important; }
+.mes .tokenCounterDisplay {
+  order: 4 !important;
+  margin-bottom: 25px !important;
+  border-bottom: 1px solid var(--book-border);
+  padding-bottom: 25px !important;
+}
+
+/* 3. 前缀/后缀的文本调用与独立颜色 (夜翼蓝) */
+.mes .mesIDDisplay::before { content: var(--ui-floor-prefix); margin-right: 6px; color: var(--ink-sub) !important; }
+.mes .mesIDDisplay::after { content: var(--ui-floor-suffix); margin-left: 4px; color: var(--ink-sub) !important; }
+
+.mes .mes_timer::before { content: var(--ui-time-prefix); margin-right: 6px; color: var(--ink-sub) !important; }
+.mes .mes_timer::after { content: var(--ui-time-suffix); margin-left: 4px; color: var(--ink-sub) !important; }
+
+.mes .tokenCounterDisplay::before { content: var(--ui-token-prefix); margin-right: 6px; color: var(--ink-sub) !important; }
+.mes .tokenCounterDisplay::after { content: var(--ui-token-suffix); margin-left: 4px; color: var(--ink-sub) !important; }
+
+/* 思维链容器 */
+.mes[is_user="false"] details:has(.mes_reasoning_summary),
+.mes[is_user="false"] .mes_block details {
+  order: 5 !important;
+  width: 85% !important;
+  margin: 0 auto 8px auto !important;
+  z-index: 3;
+  display: block !important;
+}
+
+/* 正文宽屏 */
+.mes .mes_text {
+  order: 7 !important;
+  line-height: 1.95 !important;
+  color: var(--ink-main);
+  font-size: 19px !important;
+  width: 100% !important;
+  padding: 0 15px !important;
+  margin: 0 auto !important;
+  text-align: justify;
+  z-index: 3;
+}
+.mes_text p { margin-bottom: 1.2em !important; }
+.mes_text i, .mes_text em {
+  font-style: normal !important;
+  color: var(--ink-accent); /* 深底上用亮色提亮斜体 */
+  text-shadow: 0 0 5px rgba(98, 159, 255, 0.4);
+}
+.mes_text blockquote {
+  margin: 1.5em 0 !important;
+  padding: 10px 15px !important;
+  background-color: var(--book-bg-hover);
+  border-left: 3px solid var(--ink-accent);
+  color: var(--ink-main);
+  font-size: 0.95em;
+  border-radius: 0;
+}
+.mes_text b, .mes_text strong {
+  font-weight: normal;
+  color: var(--ink-accent);
+  border-bottom: 1px solid var(--book-border);
+}
+
+/* 避免最后一条消息留白 */
+.mes.last_mes { margin-bottom: 0px !important; }
+.mes.last_mes .mesAvatarWrapper { padding-bottom: 0px !important; }
+
+/* 顶栏+底栏与聊天界面缝隙修正 */
+#form_sheld { margin: 0 auto !important; }
+body:not(.waifuMode) #sheld {
+  top: var(--bottomFormBlockSize);
+  height: calc(100dvh - var(--bottomFormBlockSize));
+  min-height: calc(100dvh - var(--bottomFormBlockSize));
+}
+
+/* ===== 五、滚动条与滑块 ===== */
+::-webkit-scrollbar { width: 6px; height: 6px; background-color: transparent; }
+::-webkit-scrollbar-track { background-color: transparent; }
+::-webkit-scrollbar-thumb {
+  background-color: rgba(98, 159, 255, 0.3);
+  border-radius: 10px;
+  border: none;
+  box-shadow: 0 0 5px rgba(98, 159, 255, 0.2) !important;
+}
+::-webkit-scrollbar-thumb:hover { background-color: var(--ink-sub); }
+
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent !important;
+  cursor: pointer;
+}
+input[type="range"]::-webkit-slider-runnable-track {
+  width: 100%; height: 2px; background: var(--book-border); border-radius: 0px; border: none;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none;
+  margin-top: -6px; height: 14px; width: 6px;
+  background-color: var(--ink-main); border: none; border-radius: 0;
+  box-shadow: 0 0 8px rgba(98, 159, 255, 0.5);
+  transition: transform 0.8s ease;
+}
+input[type="range"]:hover::-webkit-slider-thumb,
+input[type="range"]:active::-webkit-slider-thumb {
+  transform: scale(1.2); background-color: var(--ink-accent);
+}
+input[type="range"]::-moz-range-track {
+  height: 2px; background: var(--book-border); border-radius: 0px; border: none;
+}
+input[type="range"]::-moz-range-thumb {
+  height: 14px; width: 6px; background-color: var(--ink-main);
+  border: none; border-radius: 0; box-shadow: 0 0 8px rgba(98, 159, 255, 0.5);
+}
+
+/* ===== 六、输入框占位符 ===== */
+#nonQRFormItems { position: relative; }
+#send_textarea::placeholder { color: transparent !important; text-shadow: none !important; }
+#nonQRFormItems:has(#send_textarea:placeholder-shown)::before {
+  color: var(--ink-sub);
+  content: var(--input-placeholder);
+  text-shadow: var(--glow-light);
+  position: absolute;
+  left: 50%; top: 50%;
+  transform: translate(-50%, -50%);
+  font-family: var(--font-main);
+  font-size: 0.75em;
+  line-height: 1.5;
+  pointer-events: none;
+  z-index: 10;
+  white-space: nowrap;
+  overflow: visible;
+  text-overflow: clip;
+  max-width: calc(100% - 30px);
+}
+
+/* ===== 七、正则脚本防误触 (深色适配) ===== */
+#saved_regex_scripts,
+#saved_scoped_scripts,
+#saved_preset_scripts,
+#global-script-list,
+#character-script-list {
+  margin-right: 80px !important;
+}
+.regex-script-label.flex-container,
+.flex-container .script-item {
+  flex-wrap: wrap !important;
+  padding: 5px 10px;
+  border-radius: 4px;
+  margin-bottom: 5px;
+  background: rgba(20, 25, 35, 0.6);
+  border: 1px solid var(--book-border);
+}
+.regex-script-label.flex-container .regex_script_name,
+.script-item .script-item-name {
+  flex-basis: 100%;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  word-break: break-word;
+  font-weight: normal;
+  font-size: 1.05em;
+  color: var(--ink-main);
+  text-shadow: var(--glow-light);
+}
+.regex-script-label.flex-container > .flex-container.flexnowrap,
+.script-item .script-item-control {
+  width: 100%;
+  justify-content: flex-start;
+}
+
+/* ===== 八、加载更多 ===== */
+#show_more_messages {
+  font-size: 0 !important;
+  color: transparent !important;
+  display: block;
+  padding: 8px 30px;
+  margin: 30px auto;
+  width: fit-content;
+  background-color: transparent;
+  border: 1px solid var(--book-border);
+  border-radius: 50px;
+  box-shadow: none;
+  cursor: pointer;
+  transition: all 0.8s ease;
+}
+#show_more_messages::before {
+  content: var(--load-more-text);
+  font-family: var(--font-main);
+  font-size: 13px !important;
+  color: var(--ink-sub) !important;
+  letter-spacing: 0.2em;
+  text-shadow: var(--glow-light);
+  transition: color 0.8s ease, text-shadow 0.8s ease;
+}
+@media (hover: hover) {
+  #show_more_messages:hover {
+    background-color: var(--book-bg-hover);
+    border-color: var(--ink-accent);
+    box-shadow: 0 0 15px rgba(98, 159, 255, 0.2);
+  }
+  #show_more_messages:hover::before {
+    color: var(--ink-accent) !important;
+    text-shadow: var(--glow-strong);
+  }
+}
+
+/* ===== 九、思维链美化 (深黑玻璃风) ===== */
+@keyframes poetic-breathing {
+  0% {
+    opacity: var(--breath-min);
+    filter: blur(1px);
+    text-shadow: var(--glow-light);
+  }
+  50% {
+    opacity: 1;
+    filter: blur(0px);
+    text-shadow: var(--glow-strong);
+  }
+  100% {
+    opacity: var(--breath-min);
+    filter: blur(1px);
+    text-shadow: var(--glow-light);
+  }
+}
+.mes[is_user="false"] details:has(.mes_reasoning:empty) { display: none !important; }
+.mes[is_user="false"] .mes_reasoning_header_title:empty::before {
+  content: none !important; display: none !important;
+}
+
+.mes[is_user="false"] .mes_reasoning_header {
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0;
+  padding: 5px 0;
+  transition: all 0.8s ease-in-out;
+  text-align: center;
+  width: 100% !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+}
+.mes[is_user="false"] .mes_reasoning_header_title {
+  font-size: 0 !important;
+  display: block !important;
+  width: 100% !important;
+  text-align: center !important;
+}
+.mes[is_user="false"] .mes_reasoning_header_title::before {
+  content: var(--reasoning-text);
+  font-family: var(--font-main);
+  font-size: 0.85rem !important;
+  color: var(--ink-accent);
+  font-weight: normal;
+  letter-spacing: 0.1em;
+  white-space: pre-wrap;
+  line-height: 1.8;
+  display: block !important;
+  width: 100% !important;
+  text-align: center !important;
+  transition: opacity 0.8s ease, filter 0.8s ease, text-shadow 0.8s ease !important;
+  animation: poetic-breathing 8s ease-in-out infinite;
+}
+.mes[is_user="false"] .mes_reasoning_summary {
+  list-style: none;
+  cursor: pointer;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center;
+  width: 100%;
+  margin: 0 !important;
+}
+.mes[is_user="false"] .mes_reasoning_summary::-webkit-details-marker { display: none !important; }
+.mes[is_user="false"] .mes_reasoning_arrow { display: none !important; }
+
+.mes[is_user="false"] .mes_reasoning {
+  margin: 10px auto 25px auto !important;
+  padding: 20px 30px !important;
+  background-color: rgba(20, 30, 45, 0.6) !important; /* 调整为深色深邃蓝黑框 */
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--book-border) !important;
+  border-left: 3px double var(--ink-sub) !important; /* 加强左侧边界 */
+  border-radius: 2px 6px 6px 2px !important;
+  color: var(--ink-main) !important;
+  font-family: var(--font-main) !important;
+  font-size: 0.95em !important;
+  line-height: 1.8 !important;
+  text-align: justify !important;
+  text-shadow: none !important;
+  box-shadow: inset 0 0 20px rgba(98, 159, 255, 0.05) !important;
+  width: 100%;
+  max-height: 60vh !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+}
+.mes[is_user="false"] .mes_reasoning::-webkit-scrollbar { width: 4px !important; }
+.mes[is_user="false"] .mes_reasoning::-webkit-scrollbar-track { background: transparent !important; }
+.mes[is_user="false"] .mes_reasoning::-webkit-scrollbar-thumb {
+  background: var(--book-border) !important;
+  border-radius: 10px !important;
+}
+.mes[is_user="false"] .mes_reasoning::-webkit-scrollbar-thumb:hover { background: var(--ink-accent) !important; }
+
+/* 悬停时定格呼吸动画，诗句完全清晰 */
+.mes[is_user="false"] .mes_reasoning_header:hover .mes_reasoning_header_title::before {
+  /* 悬停时不要暂停动画，直接用 !important 强杀当前帧的属性 */
+  opacity: 1 !important;
+  filter: blur(0px) !important;
+  text-shadow: var(--glow-strong) !important;
+  /* 配合 transition，移入时会平滑亮起；移出时虽然依然会交还给动画，但高延迟的 transition 会在一定程度上缓冲掉断崖式的跳变感 */
+}
+
+/* ===== 十、收藏栏滑动 ===== */
+.hotswap.avatars_inline {
+  display: flex;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  padding-right: 15px;
+}
+.hotswap.avatars_inline::-webkit-scrollbar { display: none; }
+.hotswap.avatars_inline { scrollbar-width: none; }
+@media (max-width: 768px) {
+  .hotswap.avatars_inline { overflow: auto; flex-wrap: wrap; }
+}
+
+/* ===== 十一、隐形寄语双轨 (修复隐形与模糊问题) ===== */
+.mes_text::after {
+  display: block;
+  width: 100%;
+  margin: 30px auto 0 auto;
+  text-align: center;
+  color: var(--ink-sub);
+  font-family: var(--font-main);
+  font-size: 13px;
+  letter-spacing: 0.4em;
+  text-shadow: none !important; /* 移除常态阴影 */
+  /* 提高透明度，保证无需鼠标移上去也能阅读 */
+  opacity: 0.4; 
+  /* 彻底移除 blur 滤镜，保证文字边缘清晰 */
+  filter: blur(0px); 
+  transition: opacity 1.5s ease, text-shadow 1.5s ease, color 1.5s ease;
+}
+.mes:hover .mes_text::after {
+  opacity: 0.9;
+  color: var(--ink-accent);
+  text-shadow: var(--glow-light); /* 仅在悬停时增加微弱的辉光 */
+}
+.mes[is_user="false"] .mes_text::after { content: var(--footer-text-char); }
+.mes[is_user="true"] .mes_text::after { content: var(--footer-text-user); }
+
+/* ===== 十二、提示词头部修复 ===== */
+.completion_prompt_manager_header {
+  color: var(--ink-sub) !important;
+}
+
+/* ===== 提示词管理器毛玻璃 (深色适配) ===== */
+#completion_prompt_manager_list,
+.ui-sortable {
+  background-color: rgba(15, 20, 25, 0.6) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  color: var(--ink-main) !important;
+  border-radius: 8px;
+}
+#completion_prompt_manager_list .ui-sortable > li,
+#completion_prompt_manager_list .list-group-item {
+  background: rgba(30, 40, 55, 0.4) !important;
+  border: .5px solid var(--book-border) !important;
+  color: var(--ink-main) !important;
+  margin: 2px 0;
+}
+#completion_prompt_manager_list .ui-sortable > li:hover,
+#completion_prompt_manager_list .list-group-item:hover {
+  background: rgba(45, 65, 90, 0.6) !important;
+}
+
+/* ===== 底部 QR 栏 (深黑半透明) ===== */
+#qr--bar {
+  position: absolute !important;
+  bottom: 100% !important;
+  left: 0;
+  width: 100%;
+  z-index: 999;
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  margin-bottom: 0;
+  pointer-events: none;
+  transition: all 0.3s ease 0.6s;
+  background: rgba(15, 20, 28, 0.85) !important;
+  backdrop-filter: blur(40px) !important;
+  -webkit-backdrop-filter: blur(40px) !important;
+  border: 1px solid var(--book-border);
+  border-bottom: none;
+  border-radius: 8px 8px 0 0;
+  box-shadow: 0 -8px 20px rgba(0, 0, 0, 0.3);
+}
+#send_form:hover #qr--bar,
+#qr--bar:hover {
+  max-height: 500px;
+  opacity: 1;
+  margin-bottom: 2px;
+  pointer-events: auto;
+  transition: all 0.3s ease 0s;
+}
+#qr--bar > div {
+  display: flex !important;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px !important;
+  padding: 6px !important;
+}
+#qr--bar .qr-link,
+#qr--bar .qr--button {
+  padding: 4px 10px !important;
+  font-size: 13px !important;
+  margin: 0 !important;
+  background: rgba(30, 45, 65, 0.6) !important;
+  border: 1px solid var(--book-border) !important;
+  border-radius: 4px;
+  color: var(--ink-main) !important;
+}
+#qr--bar .qr-link:hover,
+#qr--bar .qr--button:hover {
+  background: var(--ink-sub) !important;
+  color: #fff !important;
+  box-shadow: var(--glow-light);
+}
+
+/* ===== 选中文本荧光笔 (方案B：终端反相高亮) ===== */
+.mes_text ::selection {
+  background: #629FFF !important; /* 背景使用极亮的高饱和夜翼蓝 */
+  color: #0A0F1A !important;      /* 文字反相为极深邃的暗夜黑 */
+  text-shadow: none !important;   /* 必须移除阴影 */
+}
+
+/* ===== 对白高亮 (夜翼战术HUD版) ===== */
+.mes_text q, .mes_text b, .mes_text strong {
+  font-style: normal !important;
+  quotes: none !important;
+  font-weight: normal;
+  text-shadow: none !important; 
+  
+  /* 对白文字颜色：经典的夜翼战衣蓝 */
+  color: #5B9DFF !important; 
+  
+  /* 对白底色：极度深邃的暗夜蓝，确保高亮蓝色文字的绝对辨识度 */
+  background-color: rgba(12, 22, 38, 0.7) !important;
+  
+  /* 增加战术边框：极细微的蓝色轮廓线，强化面板质感 */
+  border: 1px solid rgba(91, 157, 255, 0.1) !important;
+  
+  margin: 0px 3px !important;
+  padding: 2px 6px !important;
+  border-radius: 4px !important;
+  font-size: 1em !important;
+  display: inline;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+/* ===== 全局输入框/选择框背景统一修复 (深色暗化) ===== */
+textarea,
+select,
+input.text_pole,
+textarea.text_pole,
+select.text_pole,
+.select2-container--default .select2-selection--single,
+.select2-container--default .select2-selection--multiple,
+#bg-filter,
+#persona_search_bar,
+#world_info_search {
+  background-color: rgba(15, 20, 30, 0.65) !important;
+  color: var(--ink-main) !important;
+  border: 1px solid var(--book-border) !important;
+}
+input.text_pole::placeholder,
+textarea.text_pole::placeholder,
+#bg-filter::placeholder,
+#persona_search_bar::placeholder,
+#world_info_search::placeholder {
+  color: var(--ink-sub) !important;
+  opacity: 0.8;
+}
+select option {
+  background-color: #0F141E !important; /* 下拉菜单使用深空黑 */
+  color: var(--ink-main) !important;
+}
+
+/* ===== 世界书标签 (深色霓虹化) ===== */
+.select2-selection__choice,
+.select2-selection__choice .text_pole,
+.select2-selection__choice__display {
+  background: rgba(98, 159, 255, 0.15) !important;
+  color: var(--ink-main) !important;
+  border: 1px solid var(--book-border) !important;
+}
+.select2-selection__choice:hover,
+.select2-selection__choice:hover .text_pole,
+.select2-selection__choice__display:hover,
+.select2-selection__choice .text_pole:hover {
+  background: rgba(98, 159, 255, 0.3) !important;
+  border-color: var(--ink-accent) !important;
+  box-shadow: 0 0 8px rgba(98, 159, 255, 0.3) !important;
+  color: var(--ink-main) !important;
+}
+.select2-selection__choice__remove {
+  color: var(--ink-accent) !important;
+}
+
+/* ===== 设置面板 h4 与 standoutHeader 统一样式 (暗色系) ===== */
+#user-settings-block h4,
+.user-settings h4,
+.settings-section h4,
+h4.standoutHeader,
+div.standoutHeader,
+div.inline-drawer-header,
+#extensions_settings h4,
+#prompt-manager h4 {
+  background: rgba(98, 159, 255, 0.15) !important;
+  color: var(--ink-accent) !important;
+  border-bottom: 1px solid var(--book-border) !important;
+  margin-bottom: 6px;
+  padding: 8px 12px !important;
+  border-radius: 4px 4px 0 0;
+  font-weight: normal;
+  text-shadow: var(--glow-light);
+}
+#user-settings-block h4:hover,
+.user-settings h4:hover,
+.settings-section h4:hover,
+h4.standoutHeader:hover,
+div.standoutHeader:hover,
+div.inline-drawer-header:hover,
+#extensions_settings h4:hover,
+#prompt-manager h4:hover {
+  background: rgba(98, 159, 255, 0.25) !important;
+}
+
+/* ===== 提示词管理器开关颜色 ===== */
+#completion_prompt_manager_list .fa-toggle-on::before {
+  color: var(--ink-accent) !important;
+}
+#completion_prompt_manager_list .fa-toggle-off::before {
+  color: rgba(98, 159, 255, 0.3) !important;
+}
+
+/* ===== 心理描写：反引号 → <code> ===== */
+.mes_text code {
+  background-color: rgba(25, 35, 45, 0.5) !important; /* 加深底色 */
+  color: #7A9CB8 !important; /* 降低文字亮度 */
+  font-family: var(--font-main);
+  font-style: normal;
+  font-size: 1em;
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: none;
+  text-shadow: none !important;
+}
+
+/* ==================================================== */
+/* 📱 移动端专属适配与降级 (最大宽度 768px 触发) */
+/* ==================================================== */
+@media (max-width: 768px) {
+  
+  /* 1. 背景重置：手机竖屏太窄，必须拉回居中，保证人物可见 */
+
+  /* 2. 交互降级：取消悬停阅读机制。思维链在手机上强制常亮、不模糊 */
+  .mes[is_user="false"] .mes_reasoning_header_title::before {
+    animation: none !important;
+    opacity: 1 !important;
+    filter: blur(0px) !important;
+    text-shadow: var(--glow-strong) !important;
+  }
+
+  /* 3. 空间优化：缩小大标题和水印，防止在小屏幕上挤占过多正文空间 */
+  .mes::after { font-size: 3.5em !important; } /* 后景英文缩小 */
+  .mes::before { font-size: 1.2em !important; top: 45px !important; } /* 前景中文缩小 */
+  .mes { padding-top: 90px !important; } /* 缩小头部留白 */
+
+  /* 4. 性能保护：如果在手机上打字卡顿，请删掉这部分的注释内容，留下红色感叹号以内的代码就够了，这行代码将关闭雨滴效果❗body::after, html::after { display: none !important; }❗*/
+
+  
+  /* 5. 侧边距压缩：让正文在手机上能显示更多字 */
+  .mes .mes_text { padding: 0 5px !important; font-size: 16px !important; }
+}
+
+/* 6. 修复特定 User 横幅图在手机端的裁切问题 */
+  /* 将锚点强制钉在右侧（right），垂直方向保持原有的 20% 偏上位置 */
+  .mes[is_user="true"]:nth-of-type(3n+2) .avatar img,
+  .mes[is_user="true"]:nth-of-type(3n+3) .avatar img {
+    object-position: right 20% !important;
+  }
+}
+
+/* ==================================================== */
+/* 底栏菜单终极重构 (保留原生高度 + 极致清晰化) */
+/* ==================================================== */
+
+/* 1. 面板底座：只加深背景和模糊，去除了尺寸压缩代码 */
+.options-content,
+.popup {
+    background-color: rgba(12, 18, 28, 0.9) !important;
+    backdrop-filter: blur(24px) !important;
+    -webkit-backdrop-filter: blur(24px) !important;
+    border: 1px solid rgba(98, 159, 255, 0.2) !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7) !important;
+    border-radius: 8px !important;
+}
+
+/* 2. 菜单项：仅解除系统强制的透明度封印，不碰原生的宽高和边距 */
+.options-content .menu_button,
+.options-content .list-group-item,
+.options-content a, 
+.popup .menu_button,
+.popup a {
+    opacity: 1 !important; 
+    background-color: transparent !important;
+    display: flex !important;
+    align-items: center !important;
+    text-decoration: none !important; 
+}
+
+/* 3. 分割线修复：保持战术质感 */
+.options-content hr, .popup hr {
+    border: none !important;
+    border-bottom: 1px solid rgba(98, 159, 255, 0.1) !important;
+    margin: 6px 0 !important; 
+}
+
+/* 4. 悬停交互反馈 */
+.options-content .menu_button:hover,
+.options-content .list-group-item:hover,
+.options-content a:hover,
+.popup .menu_button:hover,
+.popup a:hover {
+    background-color: rgba(98, 159, 255, 0.2) !important;
+}
+
+.options-content .menu_button:hover span,
+.options-content .list-group-item:hover span,
+.options-content a:hover span,
+.popup .menu_button:hover span,
+.popup a:hover span {
+    text-shadow: 0 0 8px rgba(98, 159, 255, 0.8), 0 1px 4px rgba(0,0,0,1) !important;
+}
+
+.options-content .menu_button:hover i,
+.options-content .list-group-item:hover i,
+.options-content a:hover i,
+.popup .menu_button:hover i,
+.popup a:hover i {
+    color: var(--ink-accent) !important;
+}
